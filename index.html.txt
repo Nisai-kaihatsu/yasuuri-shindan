@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>★ぽまえの人生安売り診断★〜逝ってよし！〜</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0; 
+            font-family: "MS PGothic", "Mona", "Courier New", sans-serif;
+            font-size: 15px; /* 視認性向上のため底上げ */
+            margin: 0; padding: 10px;
+        }
+
+        /* 2ch風マウスストーカー */
+        .star {
+            position: absolute;
+            pointer-events: none;
+            color: #ff0;
+            font-size: 14px;
+            z-index: 9999;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            border: 3px double #f0f;
+            background: #000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            border: 1px dashed #0f0;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .neon-title {
+            color: #fff;
+            text-shadow: 0 0 5px #f0f, 0 0 10px #f0f;
+            font-size: 24px;
+            margin: 5px 0;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border: 2px solid #0f0;
+            border-collapse: collapse;
+            min-width: 320px;
+        }
+
+        td { border: 1px solid #0f0; padding: 10px; }
+
+        .header-td { background-color: #003300; color: #ff0; width: 45%; font-weight: bold; }
+
+        input[type="number"], select {
+            background: #000; color: #0f0; border: 1px solid #0f0; 
+            width: 100%; box-sizing: border-box; padding: 6px; font-size: 16px; /* スマホ最適化 */
+        }
+
+        .cool-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to bottom, #666, #000, #666);
+            color: #fff;
+            border: 3px outset #ccc;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .cool-btn:active { border-style: inset; }
+
+        #result-view { display: none; text-align: center; }
+
+        /* ランク表示と点滅効果 */
+        .rank-label {
+            font-size: 26px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 5px;
+            display: inline-block;
+        }
+        .rank-high { 
+            color: #f00; 
+            text-shadow: 0 0 5px #f00;
+            animation: blink 1s step-end infinite; 
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        .rank-mid { color: #ff0; }
+        .rank-low { color: #0ff; }
+
+        .aa-container {
+            background: #000; color: #fff; padding: 10px; border: 1px dotted #fff;
+            font-family: "MS PGothic", "Mona", sans-serif;
+            white-space: pre; overflow-x: auto; text-align: left;
+            margin: 15px 0; line-height: 1.2; font-size: 12px;
+        }
+
+        .donation-box {
+            color: #0f0; border: 2px solid #0f0; padding: 10px;
+            margin: 20px 0; font-weight: bold; background: #002200; font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .bbs-area {
+            background: #eee; color: #000; padding: 10px;
+            margin-top: 20px; text-align: left; font-family: serif;
+        }
+
+        .bbs-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #888;
+        }
+
+        .bbs-post { border-bottom: 1px solid #aaa; padding: 5px 0; font-size: 12px; }
+
+        .attention-box {
+            border: 1px double #f00;
+            margin: 15px auto; padding: 10px;
+            max-width: 480px; background: #1a0000;
+        }
+
+        footer {
+            margin-top: 30px; text-align: center; font-size: 11px;
+            border-top: 1px solid #333; padding-top: 15px; color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 class="neon-title">ぽまえの人生安売り診断</h1>
+        <div style="font-size:12px; color:#ff0; font-weight:bold;">〜 搾取されてる現実見ようずw 〜</div>
+    </header>
+
+    <div id="input-view">
+        <div class="table-wrapper">
+            <table>
+                <tr><td class="header-td">★年齢層</td><td>
+                    <select id="age">
+                        <option value="22">20代前半</option>
+                        <option value="28">20代後半</option>
+                        <option value="35">30代</option>
+                        <option value="45">40代以上</option>
+                    </select>
+                </td></tr>
+                <tr><td class="header-td">★推定年収(万円)</td><td><input type="number" id="income" value="350"></td></tr>
+                <tr><td class="header-td">★月間残業時間(h)</td><td><input type="number" id="overtime" value="40"></td></tr>
+                <tr><td class="header-td">★平均睡眠時間(h)</td><td><input type="number" id="sleep" value="6"></td></tr>
+                <tr><td class="header-td">★上司の凸頻度</td><td>
+                    <select id="boss">
+                        <option value="0">勤務中のみ</option>
+                        <option value="10">たまに休日も来る</option>
+                        <option value="25">24時間365日</option>
+                    </select>
+                </td></tr>
+                <tr><td class="header-td">★自由時間/週(h)</td><td><input type="number" id="mytime" value="10"></td></tr>
+                <tr><td class="header-td">★日曜夜の絶望</td><td>
+                    <select id="depress"><option value="0">皆無</option><option value="15" selected>吐き気がする</option><option value="30">意識が飛ぶ</option></select>
+                </td></tr>
+            </table>
+        </div>
+        <button class="cool-btn" onclick="diagnose()">[ 診断結果をみる ]</button>
+    </div>
+
+    <div id="result-view">
+        <div style="font-size:18px; color:#f0f;">安売りスコア：<span id="score-num" style="font-size:48px">0</span>点</div>
+        <div id="rank-display" class="rank-label"></div>
+        <div id="comment-box" style="color:#ff0; font-weight:bold; margin:10px 0; min-height:1.2em;"></div>
+        
+        <div class="aa-container" id="aa-box"></div>
+        
+        <div style="height:210px; margin:15px 0;"><canvas id="myChart"></canvas></div>
+        
+        <div class="donation-box">
+            このツールで収益が出たら大部分を寄付します。<br>
+            稼いで寄付する22歳 にさい。 (@Nisai_kaihatsu)
+        </div>
+
+        <div class="bbs-area">
+            <div style="font-weight:bold; border-bottom:1px solid #000;">【犠牲者報告板】</div>
+            <div id="bbs-list" class="bbs-scroll"></div>
+        </div>
+
+        <button class="cool-btn" onclick="tweet()" style="background:#1da1f2; border-color:#fff;">[ Xで晒す ]</button>
+        <br>
+        <a href="javascript:location.reload()" style="color:#0f0; font-size:13px;">[ 診断トップへ戻る ]</a>
+    </div>
+
+    <footer>
+        <p>管理人：にさい。 (@Nisai_kaihatsu)</p>
+        <img id="qr-img" src="" alt="QR" style="border:3px solid #fff; width:110px;"><br>
+        
+        <div class="attention-box">
+            <div style="color: #f00; font-weight: bold; font-size: 14px; margin-bottom: 5px; text-decoration: underline;">！！ ATTENTION ！！</div>
+            <p style="color: #ff0; font-size: 10px; line-height: 1.4; text-align: left; margin: 0;">
+                当サイトはジョークツールです。算出される結果は管理人の偏見に基づくものであり、特定の企業や団体を批判する意図は一切ございません。
+                ここから先の閲覧によって生じたいかなる損害も管理人は一切の責任を負いません。マターリできない方はブラウザを閉じてください。
+            </p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // QR生成
+    document.getElementById('qr-img').src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent("https://x.com/Nisai_kaihatsu");
+
+    let myChart = null;
+    let postCount = 0;
+
+    // マウスストーカー(PCのみ)
+    if(!('ontouchstart' in window)) {
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.8) {
+                const star = document.createElement('div');
+                star.className = 'star'; star.innerText = '★';
+                star.style.left = e.pageX + 'px'; star.style.top = e.pageY + 'px';
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 700);
+            }
+        });
+    }
+
+    // 煽りコメント配列
+    const jokeComments = [
+        "ちょｗｗｗぽまえの値段、駄菓子並みだぞｗｗｗ",
+        "社畜を通り越して、もはや動くボランティアだお（ ＾ω＾）",
+        "その時給でよく生きてるな…感心するお…",
+        "おめでとう！君の人生は『卸売価格』で絶賛販売中だ！",
+        "日曜の夜に震えるのも納得の搾取っぷりだおｗ",
+        "もはや給料じゃなくて『エサ』レベルだろこれｗ",
+        "経営者に感謝されすぎて銅像立つレベルの安売りだおｗ",
+        "今すぐ布団に入って、明日が来ないことを祈るんだお。",
+        "ぽまえ…それ、時給換算するとうまい棒何本分だ…？",
+        "安心しろ、地獄の底にはまだ先があるおｗ"
+    ];
+
+    const aaList = [
+        "　　　 ∧＿∧\n　ΣΣ（　 ;´Д｀） ＜ 安売りしすぎだお！！",
+        " 　　 ∧＿∧\n 　　（　´Д｀） ＜ もうゴールしてもいいよね…",
+        "　　 ∧＿∧\n　　（　´Д｀） ＜ 逝ってよし！",
+        "　 　∧ ∧\n　 　(ﾟДﾟ;) ＜ 奴隷乙ｗ"
+    ];
+
+    function diagnose() {
+        const income = parseFloat(document.getElementById('income').value);
+        const ot = parseFloat(document.getElementById('overtime').value) || 0;
+        const sleep = parseFloat(document.getElementById('sleep').value) || 7;
+        const myTime = parseFloat(document.getElementById('mytime').value) || 0;
+        const boss = parseInt(document.getElementById('boss').value);
+        const depress = parseInt(document.getElementById('depress').value);
+        const age = parseInt(document.getElementById('age').value);
+
+        // バリデーション
+        if (isNaN(income) || income <= 0) {
+            alert("年収をちゃんと入力するお！0円はさすがに嘘だろｗ");
+            return;
+        }
+
+        // 1. 搾取スコア (時給ベース)
+        let baseWage = age < 25 ? 1200 : (age < 35 ? 1600 : 2000);
+        const totalWorkHours = 2000 + (ot * 12);
+        const hourly = (income * 10000) / totalWorkHours;
+        const wageScore = Math.min(40, Math.max(0, (1 - hourly / baseWage) * 40));
+
+        // 2. 幸福欠如スコア
+        const happinessScore = Math.min(30, Math.max(0, 30 - (myTime * 0.75) + (Math.max(0, 6 - sleep) * 3)));
+
+        // 3. 精神摩耗スコア
+        const mentalScore = Math.min(30, boss + depress);
+
+        // 合計とソフト補正 (極端な値を出にくくする)
+        let totalScore = wageScore + happinessScore + mentalScore;
+        totalScore = Math.round(totalScore * 0.85 + 7); // 中央(50点付近)に寄せる
+        totalScore = Math.max(0, Math.min(100, totalScore));
+
+        // 表示処理
+        document.getElementById('input-view').style.display = 'none';
+        document.getElementById('result-view').style.display = 'block';
+        document.getElementById('score-num').innerText = totalScore;
+
+        const rankEl = document.getElementById('rank-display');
+        if(totalScore >= 85) {
+            rankEl.innerText = "【逝ってよし認定】"; rankEl.className = "rank-label rank-high";
+        } else if(totalScore >= 60) {
+            rankEl.innerText = "【社畜中級】"; rankEl.className = "rank-label rank-mid";
+        } else {
+            rankEl.innerText = "【まだマターリ可能】"; rankEl.className = "rank-label rank-low";
+        }
+
+        // 煽りコメント表示
+        const cIdx = Math.floor(Math.random() * jokeComments.length);
+        document.getElementById('comment-box').innerText = jokeComments[cIdx];
+
+        // AA表示
+        const aaBox = document.getElementById('aa-box');
+        aaBox.innerText = totalScore >= 85 ? aaList[Math.floor(Math.random() * aaList.length)] : " ∧＿∧\n（　´∀｀）＜ ぬるぽ";
+
+        // BBS蓄積 (最大20件程度)
+        postCount++;
+        const list = document.getElementById('bbs-list');
+        const shortComment = jokeComments[cIdx].substring(0, 15) + "...";
+        const newPost = `<div class="bbs-post">${postCount}: <b>名無しさん＠診断中</b>：スコア${totalScore}点<br>${shortComment}</div>`;
+        list.innerHTML = newPost + list.innerHTML;
+
+        renderChart(wageScore, happinessScore, mentalScore);
+    }
+
+    function renderChart(w, h, m) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['搾取度', '幸福欠如', '精神摩耗'],
+                datasets: [{ 
+                    data: [w*2.5, h*3.3, m*3.3], 
+                    backgroundColor: 'rgba(255,0,255,0.4)', 
+                    borderColor: '#f0f',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                scales: { 
+                    r: { 
+                        grid: { color: '#0f0' }, 
+                        angleLines: { color: '#0f0' }, 
+                        ticks: { display: false }, 
+                        min: 0, max: 100 
+                    }
+                },
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    function tweet() {
+        const s = document.getElementById('score-num').innerText;
+        const text = encodeURIComponent(`【ぽまえの人生安売り診断】スコアは ${s} 点でした！\n管理人：@Nisai_kaihatsu\n#安売りスコア #インターネット老人会 #逝ってよし #社畜診断`);
+        window.open(`https://twitter.com/intent/tweet?text=${text}`);
+    }
+</script>
+</body>
+</html>
